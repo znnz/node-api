@@ -55,5 +55,27 @@ apiRouter.route('/users')
 		});
 	});
 
+apiRouter.route('/users/:user_id')
+	.get(function(req,res){
+		User.findById(req.params.user_id,function(err,user){
+			if(err) res.send(err);
+			res.json(user);
+		});
+	})
+	.put(function(req,res){
+		console.log('--- put user ---');
+		User.findById(req.params.user_id,function(err,user){
+			if(err) res.send(err);
+			if(req.body.name)user.name=req.body.name;
+			if(req.body.username)user.username=req.body.username;
+			if(req.body.password)user.password=req.body.password;
+			
+			user.save(function(err){
+				if(err) res.send(err);
+				res.json({message:"User updated!!!!"});
+			});
+		});
+	});
+
 app.listen(port);
 console.log('sth going on '+port);
