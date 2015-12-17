@@ -6,7 +6,9 @@ var express=require('express'),
 	mongoose=require('mongoose'),
 	port=process.env.PORT||3000,
 	apiRouter=express.Router(),
-	User=require('./models/user');
+	User=require('./models/user'),
+	jwt=require('jsonwebtoken'),
+	superSecret='nthg00nach@ng3myl0v!S#it';
 mongoose.connect('mongodb://localhost:27017/node-api');
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
@@ -23,6 +25,40 @@ app.use(morgan('dev'));
 app.get('/',function(req,res){
 	res.send('Hairat');
 });
+
+apiRouter.post('/authenticate',function(req,res){
+	User.findOne({
+		username:req.body.username
+	}).select('name username password').exec(function(err,user){
+		if(err) return err;
+		if(!user){
+			res.json({
+				success:false,
+				message:'Authentication failed. User not found.'
+			});
+		}else if(user){
+			var validPassword=user.comparePassword(req.body.password);
+			if(!validPassword){
+				res.json({
+					success:false,
+					message:'Authentication failed. Wrong Password.'
+				});
+			}else{
+				var token=jwt.sign({
+					name:user.name,
+					username:user.username
+				},superSecret,{expiresIn:1440});
+				
+				res.json({
+					success:true,
+					message:'Enjoy your token!',
+					token:token
+				})
+			}
+		}
+	});
+});
+
 apiRouter.use(function(req,res,next){
 	console.log('___attack__________');
 	next();
